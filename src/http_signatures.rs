@@ -145,7 +145,7 @@ where
 /// or if the signature could not be verified.
 pub(crate) async fn signing_actor<'a, A, H>(
     headers: H,
-    method: &Method,
+    method: &http::Method,
     uri: &Uri,
     data: &Data<<A as Object>::DataType>,
 ) -> Result<A, <A as Object>::Error>

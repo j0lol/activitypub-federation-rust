@@ -11,7 +11,7 @@ use crate::{
 };
 use axum::{
     async_trait,
-    body::{Bytes, HttpBody},
+    body::{Body, Bytes, HttpBody},
     extract::FromRequest,
     http::{Request, StatusCode},
     response::{IntoResponse, Response},
@@ -59,21 +59,23 @@ pub struct ActivityData {
 }
 
 #[async_trait]
-impl<S, B> FromRequest<S, B> for ActivityData
+impl<S> FromRequest<S> for ActivityData
 where
-    Bytes: FromRequest<S, B>,
-    B: HttpBody + Send + 'static,
+    Body: HttpBody + Send + 'static,
     S: Send + Sync,
-    <B as HttpBody>::Error: std::fmt::Display,
-    <B as HttpBody>::Data: Send,
+    <axum::body::Body as HttpBody>::Error: std::fmt::Display,
+    <axum::body::Body as HttpBody>::Data: Send,
 {
     type Rejection = Response;
 
-    async fn from_request(req: Request<B>, _state: &S) -> Result<Self, Self::Rejection> {
+    async fn from_request(
+        req: axum::extract::Request,
+        _state: &S,
+    ) -> Result<Self, Self::Rejection> {
         let (parts, body) = req.into_parts();
 
         // this wont work if the body is an long running stream
-        let bytes = hyper::body::to_bytes(body)
+        let bytes = axum::body::to_bytes(body, usize::MAX)
             .await
             .map_err(|err| (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()).into_response())?;
 

@@ -25,7 +25,13 @@ where
     <A as Object>::Error: From<Error>,
     for<'de2> <A as Object>::Kind: Deserialize<'de2>,
 {
-    verify_body_hash(request.headers().get("Digest"), &body.unwrap_or_default())?;
+    verify_body_hash(
+        request
+            .headers()
+            .get("Digest")
+            .and_then(|header| Some(header.into())),
+        &body.unwrap_or_default(),
+    )?;
 
     http_signatures::signing_actor(request.headers(), request.method(), request.uri(), data).await
 }
